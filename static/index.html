@@ -232,7 +232,7 @@
             const total = normalizedLogits.reduce((a, b) => a + b, 0);
 
             // Reverted back to zero-indexed loop boundaries to match layout channels
-           [1,2,3].forEach(i => {
+           ;forEach(i => {
                 const percentage = ((normalizedLogits[i] / total) * 100).toFixed(1);
                 document.getElementById(`logit${i}Text`).innerText = logits[i].toFixed(3);
                 document.getElementById(`logit${i}Bar`).style.width = `${percentage}%`;
@@ -249,6 +249,36 @@
         clearBtn.addEventListener('click', () => { points = []; drawGrid(); });
         
         drawGrid();
+        function updateTelemetryDashboard(data, cx, cy) {
+    const cls = data.predicted_class;
+    const logits = data.prediction_logits;
+
+    // 1. Safe UI text and color badge assignment
+    if (colors[cls]) {
+        document.getElementById('classNameDisplay').innerText = colors[cls].name;
+        const badge = document.getElementById('classBadge');
+        badge.innerText = cls;
+        badge.className = `w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl border transition-all duration-300 ${colors[cls].badge}`;
+    }
+
+    // 2. Normalize raw model logits to clean layout percentages
+    const minLogit = Math.min(...logits);
+    const normalizedLogits = logits.map(l => l - minLogit + 0.1);
+    const total = normalizedLogits.reduce((a, b) => a + b, 0);
+
+    // 3. Update the strength bars
+   ;forEach(i => {
+        const percentage = ((normalizedLogits[i] / total) * 100).toFixed(1);
+        document.getElementById(`logit${i}Text`).innerText = logits[i].toFixed(3);
+        document.getElementById(`logit${i}Bar`).style.width = `${percentage}%`;
+    });
+
+    // 4. FIX: Only push and draw points if explicitly clicked on the canvas grid
+    if (typeof cx === 'number' && typeof cy === 'number' && !isNaN(cx) && !isNaN(cy)) {
+        points.push({ cx, cy, cls });
+        drawGrid();
+    }
+}
     </script>
 </body>
 </html>
